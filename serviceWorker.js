@@ -1,32 +1,36 @@
-const staticDevCoffee = "dev-coffee-site-v1";
-const assets = [
-  "/pwa-with-vanilla-js",
-  "/pwa-with-vanilla-js/index.html",
-  "/pwa-with-vanilla-js/css/style.css",
-  "/pwa-with-vanilla-js/js/app.js",
-  "/pwa-with-vanilla-js/images/coffee1.jpg",
-  "/pwa-with-vanilla-js/images/coffee2.jpg",
-  "/pwa-with-vanilla-js/images/coffee3.jpg",
-  "/pwa-with-vanilla-js/images/coffee4.jpg",
-  "/pwa-with-vanilla-js/images/coffee5.jpg",
-  "/pwa-with-vanilla-js/images/coffee6.jpg",
-  "/pwa-with-vanilla-js/images/coffee7.jpg",
-  "/pwa-with-vanilla-js/images/coffee8.jpg",
-  "/pwa-with-vanilla-js/images/coffee9.jpg"
-];
+'use strict';
 
-self.addEventListener("install", installEvent => {
-  installEvent.waitUntil(
-    caches.open(staticDevCoffee).then(cache => {
-      cache.addAll(assets);
-    })
-  );
+const cacheVersion = 'v1-dev';
+
+this.addEventListener('activate', function (event) {
+    event.waitUntil(
+        // Delete old cache
+        caches.keys().then(function (keyList) {
+            return Promise.all(
+                keyList.filter(function (key) {
+                    return key != cacheVersion;
+                }).map(function (key) {
+                    return caches.delete(key);
+                }));
+        })
+    );
 });
 
-self.addEventListener("fetch", fetchEvent => {
-  fetchEvent.respondWith(
-    caches.match(fetchEvent.request).then(res => {
-      return res || fetch(fetchEvent.request);
-    })
-  );
+
+this.addEventListener('fetch', function (event) {
+    let originalResponse;
+
+    event.respondWith(async function () {
+        const cache = await caches.open(cacheVersion)
+
+        const cachedResponsePromise = await cache.match(event.request.clone())
+        const networkResponsePromise = fetch(event.request)
+
+        event.waitUntil(async function () {
+            const networkResponse = await networkResponsePromise
+            await cache.put(event.request.clone(), networkResponse.clone())
+        }())
+
+        return cachedResponsePromise || networkResponsePromise
+    }());
 });
