@@ -37,7 +37,7 @@ self.addEventListener("fetch", fetchEvent => {
 			cache.put(fetchEvent.request, res);
 		});
 	}
-      return res || caches.match(fetchEvent.request).then(res2 => {
+      return res.clone() || caches.match(fetchEvent.request).then(res2 => {
         if(res2) {
 		return res2;	
 	}
