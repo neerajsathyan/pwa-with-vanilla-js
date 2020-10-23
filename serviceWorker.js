@@ -36,7 +36,7 @@ self.addEventListener("fetch", fetchEvent => {
       	caches.open(staticDevCoffee).then(cache => {
            cache.put(fetchEvent.request, resp);
         });
-	 return resp;
+	 return resp.clone();
       });
     }).catch(err => {
 	 //No cache no network 503 service unaivalable..
