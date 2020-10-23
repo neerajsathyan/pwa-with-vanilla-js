@@ -31,19 +31,19 @@ this.addEventListener('activate', function (event) {
 
 self.addEventListener("fetch", fetchEvent => {
   fetchEvent.respondWith(
-    caches.match(fetchEvent.request).then(res => {
-      return res || fetch(fetchEvent.request).then(resp => {
-      	caches.open(staticDevCoffee).then(cache => {
-           cache.put(fetchEvent.request, resp);
-        });
-	 return resp.clone();
-      });
-    }).catch(err => {
-	 //No cache no network 503 service unaivalable..
-            var myBlob = new Blob();
-            var init = { "status" : 503 , "statusText" : "Service Unaivailable!" };
-            var myResponse = new Response(myBlob,init);
-            return myResponse
+    fetch(fetchEvent.request).then(res => {
+	if(res) {
+		caches.open(staticDevCoffee).then(cache => {
+			cache.put(fetchEvent.request, res);
+		});
+	}
+      return res || caches.match(fetchEvent.request).then(res2 => {
+        if(res2) {
+		return res2;	
+	}
+          
+        throw error;
+      })
     })
   );
 });
